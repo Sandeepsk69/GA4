@@ -470,3 +470,162 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Interactions</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TLJ2XLGH3S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-TLJ2XLGH3S', { 'debug_mode': true });
+    </script>
+</head>
+<body>
+    <h1>E-commerce Interactions</h1>
+
+    <!-- 1. Select an item from a list -->
+    <h2>Product List</h2>
+    <ul id="product-list">
+        <li data-id="P001" data-name="T-Shirt" data-price="19.99">T-Shirt - $19.99</li>
+        <li data-id="P002" data-name="Jeans" data-price="49.99">Jeans - $49.99</li>
+        <li data-id="P003" data-name="Sneakers" data-price="79.99">Sneakers - $79.99</li>
+    </ul>
+
+    <!-- 2. View item details -->
+    <h2>Product Details</h2>
+    <div id="product-details"></div>
+
+    <!-- 3. Add/remove a product from a shopping cart -->
+    <h2>Shopping Cart</h2>
+    <ul id="shopping-cart"></ul>
+
+    <!-- 4. Initiate the checkout process -->
+    <button id="checkout-button" style="display: none;">Proceed to Checkout</button>
+
+    <script>
+        // Helper function to format price
+        function formatPrice(price) {
+            return parseFloat(price).toFixed(2);
+        }
+
+        // 1. Select an item from a list
+        document.getElementById('product-list').addEventListener('click', function(e) {
+            if (e.target.tagName === 'LI') {
+                const item = e.target;
+                gtag("event", "select_item", {
+                    item_list_id: "main_product_list",
+                    item_list_name: "Main Product List",
+                    items: [{
+                        item_id: item.dataset.id,
+                        item_name: item.dataset.name,
+                        price: item.dataset.price
+                    }]
+                });
+                console.log(`Selected item: ${item.dataset.name}`);
+                
+                // Trigger view item details
+                viewItemDetails(item.dataset.id, item.dataset.name, item.dataset.price);
+            }
+        });
+
+        // 2. View item details
+        function viewItemDetails(id, name, price) {
+            const detailsDiv = document.getElementById('product-details');
+            detailsDiv.innerHTML = `
+                <h3>${name}</h3>
+                <p>Price: $${formatPrice(price)}</p>
+                <button onclick="addToCart('${id}', '${name}', ${price})">Add to Cart</button>
+            `;
+
+            gtag("event", "view_item", {
+                currency: "USD",
+                value: price,
+                items: [{
+                    item_id: id,
+                    item_name: name,
+                    price: price
+                }]
+            });
+        }
+
+        // 3. Add/remove a product from a shopping cart
+        const cart = [];
+
+        function addToCart(id, name, price) {
+            cart.push({id, name, price});
+            updateCart();
+
+            gtag("event", "add_to_cart", {
+                currency: "USD",
+                value: price,
+                items: [{
+                    item_id: id,
+                    item_name: name,
+                    price: price
+                }]
+            });
+        }
+
+        function removeFromCart(index) {
+            const removedItem = cart.splice(index, 1)[0];
+            updateCart();
+
+            gtag("event", "remove_from_cart", {
+                currency: "USD",
+                value: removedItem.price,
+                items: [{
+                    item_id: removedItem.id,
+                    item_name: removedItem.name,
+                    price: removedItem.price
+                }]
+            });
+        }
+
+        function updateCart() {
+            const cartElement = document.getElementById('shopping-cart');
+            cartElement.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                total += parseFloat(item.price);
+                const li = document.createElement('li');
+                li.textContent = `${item.name} - $${formatPrice(item.price)} `;
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.onclick = () => removeFromCart(index);
+                li.appendChild(removeButton);
+                cartElement.appendChild(li);
+            });
+
+            const totalLi = document.createElement('li');
+            totalLi.textContent = `Total: $${formatPrice(total)}`;
+            cartElement.appendChild(totalLi);
+
+            document.getElementById('checkout-button').style.display = cart.length > 0 ? 'block' : 'none';
+        }
+
+        // 4. Initiate the checkout process
+        document.getElementById('checkout-button').addEventListener('click', function() {
+            gtag("event", "begin_checkout", {
+                currency: "USD",
+                value: cart.reduce((total, item) => total + parseFloat(item.price), 0),
+                items: cart.map(item => ({
+                    item_id: item.id,
+                    item_name: item.name,
+                    price: item.price
+                }))
+            });
+            console.log("Checkout initiated");
+            // Here you would typically redirect to a checkout page
+            alert("Proceeding to checkout...");
+        });
+    </script>
+</body>
+</html>
